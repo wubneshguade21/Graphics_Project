@@ -1,102 +1,143 @@
 #include <windows.h>
 #include <GL/glut.h>
-#include <math.h> // Required for sin and cos to draw the circle
+#include <math.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+float logoX = 0.0f, logoY = 0.0f, logoAngle = 0.0f, logoScale = 1.0f;
+float flagX = 0.0f, flagY = 0.0f, flagAngle = 0.0f, flagScale = 1.0f;
+
+void handleKeypress(unsigned char key, int x, int y) {
+    switch (key) {
+        case 'w': logoY += 10.0f; break;
+        case 's': logoY -= 10.0f; break;
+        case 'a': logoX -= 10.0f; break;
+        case 'd': logoX += 10.0f; break;
+        case 'r': logoAngle += 10.0f; break;
+        case 't': logoAngle -= 10.0f; break;
+        case 'm': logoScale += 0.1f; break;
+        case 'n': if(logoScale > 0.1) logoScale -= 0.1f; break;
+
+        case 'y': flagY += 10.0f; break;
+        case 'h': flagY -= 10.0f; break;
+        case 'g': flagX -= 10.0f; break;
+        case 'j': flagX += 10.0f; break;
+        case 'i': flagAngle += 10.0f; break;
+        case 'o': flagAngle -= 10.0f; break;
+        case 'u': flagScale += 0.1f; break;
+        case 'b': if(flagScale > 0.1) flagScale -= 0.1f; break;
+
+        case 27: exit(0); break;
+    }
+    glutPostRedisplay();
+}
+
 
 void display() {
-    // Clear background to a light gray so the white part of the flag is visible
     glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // =========================
-    // BAHRAIN FLAG
-    // =========================
+     glPushMatrix();
+        glTranslatef(flagX, flagY, 0.0f);
+        glTranslatef(200, 250, 0);
+        glRotatef(flagAngle, 0, 0, 1);
+        glScalef(flagScale, flagScale, 1);
+        glTranslatef(-200, -250, 0);
 
-    // 1. Red Base (It's easier to draw the red rectangle first)
-    glColor3f(0.8f, 0.0f, 0.0f);
-    glBegin(GL_POLYGON);
-        glVertex2i(50, 100);
-        glVertex2i(350, 100);
-        glVertex2i(350, 400);
-        glVertex2i(50, 400);
-    glEnd();
+        glColor3f(0.8f, 0.0f, 0.0f);
+        glBegin(GL_POLYGON);
+            glVertex2i(50, 100);
+            glVertex2i(350, 100);
+            glVertex2i(350, 400);
+            glVertex2i(50, 400);
+        glEnd();
+        glColor3f(1.0f, 1.0f, 1.0f);
+        glBegin(GL_POLYGON);
+            glVertex2i(50, 100);
+            glVertex2i(200, 100);
+            glVertex2i(200, 400);
+            glVertex2i(50, 400);
+        glEnd();
+        glBegin(GL_TRIANGLES);
+            for(int y=100; y<400; y+=60){
+                glVertex2i(200,y);
+                glVertex2i(230,y+30);
+                glVertex2i(200,y+60);
+            }
+        glEnd();
+    glPopMatrix();
 
-    // 2. White part (Left side)
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glBegin(GL_POLYGON);
-        glVertex2i(50, 100);
-        glVertex2i(200, 100);
-        glVertex2i(200, 400);
-        glVertex2i(50, 400);
-    glEnd();
+        glPushMatrix();
+        float cX = 500.0f, cY = 300.0f;
+        glTranslatef(logoX, logoY, 0.0f);
+        glTranslatef(cX, cY, 0);
+        glRotatef(logoAngle, 0, 0, 1);
+        glScalef(logoScale, logoScale, 1);
+        glTranslatef(-cX, -cY, 0);
 
-    // 3. Zig-zag edge (5 white triangles pointing into the red)
-    glBegin(GL_TRIANGLES);
-        glVertex2i(200, 100); glVertex2i(230, 130); glVertex2i(200, 160);
-        glVertex2i(200, 160); glVertex2i(230, 190); glVertex2i(200, 220);
-        glVertex2i(200, 220); glVertex2i(230, 250); glVertex2i(200, 280);
-        glVertex2i(200, 280); glVertex2i(230, 310); glVertex2i(200, 340);
-        glVertex2i(200, 340); glVertex2i(230, 370); glVertex2i(200, 400);
-    glEnd();
+        glColor3f(0.0f, 0.51f, 0.99f);
+        glBegin(GL_POLYGON);
+            for(int i=0; i<=360; i++){
+                float r = i * M_PI / 180.0f;
+                float offsetY = (i > 180) ? -85 : 85;
+                glVertex2f(cX + cos(r)*110, cY + offsetY + sin(r)*110);
+            }
+        glEnd();
 
-    // =========================
-    // BLUETOOTH LOGO
-    // =========================
 
-    // 1. Black Background Circle
-   glColor3f(0.0f, 0.0f, 0.0f); // Pure Black
+        glColor3f(1.0f, 1.0f, 1.0f);
+       glBegin(GL_QUADS);
 
-    float cX = 500.0f;
-    float cY = 300.0f;
-    float radius = 100.0f;      // The width of the "U"
-    float straightHeight = 70.0f; // Length of the straight vertical sides
 
-    glColor3f(0.0f, 0.0f, 0.0f); // Black Background
+            glVertex2i(493, 170);
+            glVertex2i(507, 170);
+            glVertex2i(507, 430);
+             glVertex2i(493, 430);
 
-    // This single loop draws the top U, straight sides, and bottom U together
-    glBegin(GL_POLYGON);
-        // Top semicircle (Inverted U)
-        for (int i = 0; i <= 180; i++) {
-            float rad = i * M_PI / 180.0f;
-            glVertex2f(cX + cos(rad) * radius, (cY + straightHeight) + sin(rad) * radius);
-        }
-        // Bottom semicircle (Regular U)
-        for (int i = 180; i <= 360; i++) {
-            float rad = i * M_PI / 180.0f;
-            glVertex2f(cX + cos(rad) * radius, (cY - straightHeight) + sin(rad) * radius);
-        }
-    glEnd();
 
-    // 2. White Rune (The "B" shape)
-    glColor3f(1.0f, 1.0f, 1.0f); // White Rune
-    glLineWidth(60.0f); // Make the lines nice and thick
-    glBegin(GL_LINE_STRIP);
-        glVertex2i(445, 225); // Bottom left
-        glVertex2i(555, 375); // Top right
-        glVertex2i(500, 435); // Top center
-        glVertex2i(500, 165); // Bottom center
-        glVertex2i(555, 225); // Bottom right
-        glVertex2i(445, 375); // Top left
-    glEnd();
+            glVertex2i(500, 438);
+            glVertex2i(507, 425);
+            glVertex2i(565, 370);
+            glVertex2i(553, 380);
 
-    glFlush();
+
+            glVertex2i(500, 162);
+            glVertex2i(507, 175);
+            glVertex2i(565, 230);
+             glVertex2i(555, 225);
+
+            glVertex2i(433, 235);
+             glVertex2i(445, 225);
+            glVertex2i(567, 375);
+             glVertex2i(555, 385);
+
+
+            glVertex2i(433, 365);
+            glVertex2i(445, 375);
+            glVertex2i(567, 225);
+            glVertex2i(555, 215);
+        glEnd();
+
+    glPopMatrix();
+
+    glutSwapBuffers();
 }
+
 
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
-    glutInitWindowSize(700, 600);
-    glutInitWindowPosition(50, 50);
-    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-    glutCreateWindow("Bluetooth (Black Circle) + Bahrain Flag");
+    glutInitWindowSize(850, 650);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutCreateWindow("Infinite Thickness Bluetooth + Bahrain Flag");
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0, 700, 0, 600);
+    gluOrtho2D(0, 850, 0, 650);
 
     glutDisplayFunc(display);
+    glutKeyboardFunc(handleKeypress);
+
     glutMainLoop();
     return 0;
 }
