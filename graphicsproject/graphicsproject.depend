@@ -1,8 +1,9 @@
 # depslib dependency file v1.0
-1775808972 source:c:\users\wubne\desktop\glut\graphicsproject\main.cpp
+1776614059 source:c:\users\wubne\desktop\glut\graphicsproject\main.cpp
 	<windows.h>
 	<GL/glut.h>
 	<math.h>
+	<iostream>
 
 1526093414 c:\program files\codeblocks\mingw\x86_64-w64-mingw32\include\windows.h
 	<_mingw.h>

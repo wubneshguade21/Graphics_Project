@@ -1,5 +1,5 @@
-#include <windows.h>
 #include <GL/glut.h>
+#include <windows.h>
 #include <math.h>
 
 #ifndef M_PI
@@ -7,133 +7,220 @@
 #endif
 float logoX = 0.0f, logoY = 0.0f, logoAngle = 0.0f, logoScale = 1.0f;
 float flagX = 0.0f, flagY = 0.0f, flagAngle = 0.0f, flagScale = 1.0f;
+float waveTime = 0.0f;
+float windScale = 0.5f;
+float flagLift = 1.0f;
+void drawRingArc(float cx, float cy, float radius, bool isFront) {
+    glBegin(GL_LINE_STRIP);
+    int start = isFront ? 270 : 90;
+    int end = isFront ? 450 : 270;
+    for (int i = start; i <= end; i++) {
+        float rad = (float)i * M_PI / 180.0f;
+        glVertex2f(cx + cos(rad) * radius, cy + sin(rad) * (radius * 0.4f));
+    }
+    glEnd();
+}
 
+void drawCircle(float cx, float cy, float r) {
+    glBegin(GL_POLYGON);
+    for (int i = 0; i < 360; i++) {
+        float theta = 2.0f * M_PI * float(i) / 360.0f;
+        glVertex2f(cx + r * cosf(theta), cy + r * sinf(theta));
+    }
+    glEnd();
+}
 void handleKeypress(unsigned char key, int x, int y) {
     switch (key) {
         case 'w': logoY += 10.0f; break;
         case 's': logoY -= 10.0f; break;
         case 'a': logoX -= 10.0f; break;
         case 'd': logoX += 10.0f; break;
-        case 'r': logoAngle += 10.0f; break;
-        case 't': logoAngle -= 10.0f; break;
+        case 'r': logoAngle += 5.0f; break;
+        case 't': logoAngle -= 5.0f; break;
         case 'm': logoScale += 0.1f; break;
-        case 'n': if(logoScale > 0.1) logoScale -= 0.1f; break;
-
+        case 'n': if (logoScale > 0.1) logoScale -= 0.1f; break;
         case 'y': flagY += 10.0f; break;
         case 'h': flagY -= 10.0f; break;
         case 'g': flagX -= 10.0f; break;
         case 'j': flagX += 10.0f; break;
-        case 'i': flagAngle += 10.0f; break;
-        case 'o': flagAngle -= 10.0f; break;
+        case 'i': flagAngle += 5.0f; break;
+        case 'o': flagAngle -= 5.0f; break;
         case 'u': flagScale += 0.1f; break;
-        case 'b': if(flagScale > 0.1) flagScale -= 0.1f; break;
-
+        case 'b': if (flagScale > 0.1) flagScale -= 0.1f; break;
+        case '2': if (windScale < 3.0f) windScale += 0.1f; break;
+        case '1': if (windScale > 0.1f) windScale -= 0.1f; break;
         case 27: exit(0); break;
     }
     glutPostRedisplay();
 }
-
-
 void display() {
-    glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-     glPushMatrix();
-        glTranslatef(flagX, flagY, 0.0f);
-        glTranslatef(200, 250, 0);
-        glRotatef(flagAngle, 0, 0, 1);
-        glScalef(flagScale, flagScale, 1);
-        glTranslatef(-200, -250, 0);
-
-        glColor3f(0.8f, 0.0f, 0.0f);
-        glBegin(GL_POLYGON);
-            glVertex2i(50, 100);
-            glVertex2i(350, 100);
-            glVertex2i(350, 400);
-            glVertex2i(50, 400);
-        glEnd();
-        glColor3f(1.0f, 1.0f, 1.0f);
-        glBegin(GL_POLYGON);
-            glVertex2i(50, 100);
-            glVertex2i(200, 100);
-            glVertex2i(200, 400);
-            glVertex2i(50, 400);
-        glEnd();
-        glBegin(GL_TRIANGLES);
-            for(int y=100; y<400; y+=60){
-                glVertex2i(200,y);
-                glVertex2i(230,y+30);
-                glVertex2i(200,y+60);
-            }
-        glEnd();
-    glPopMatrix();
-
+    glPushMatrix();
         glPushMatrix();
-        float cX = 500.0f, cY = 300.0f;
-        glTranslatef(logoX, logoY, 0.0f);
-        glTranslatef(cX, cY, 0);
-        glRotatef(logoAngle, 0, 0, 1);
-        glScalef(logoScale, logoScale, 1);
-        glTranslatef(-cX, -cY, 0);
+            glTranslatef(flagX, flagY, 0.0f);
+            glTranslatef(150, 0, 0);
+            glRotatef(flagAngle, 0, 0, 1);
+            glScalef(flagScale, flagScale, 1);
+            glTranslatef(-150, 0, 0);
 
-        glColor3f(0.0f, 0.51f, 0.99f);
-        glBegin(GL_POLYGON);
-            for(int i=0; i<=360; i++){
-                float r = i * M_PI / 180.0f;
-                float offsetY = (i > 180) ? -85 : 85;
-                glVertex2f(cX + cos(r)*110, cY + offsetY + sin(r)*110);
+            float tieOffY = 220.0f;
+            int flagBottom = 640;
+            int flagTop = 825;
+            float flagStart = 62.0f;
+            int poleHeight = 840;
+            glColor3f(0.0, 0.0, 1.0);
+            glBegin(GL_QUADS);
+                glVertex2i(10, 0);
+                 glVertex2i(90, 0);
+                 glVertex2i(90, 30);
+                 glVertex2i(10, 30);
+            glEnd();
+
+
+            glColor3f(0.6, 0.1, 0.6);
+            glBegin(GL_QUADS);
+                glVertex2i(25, 30);
+                glVertex2i(75, 30);
+                glVertex2i(75, 55);
+                glVertex2i(25, 55);
+            glEnd();
+
+            glColor3f(0.3, 0.3, 0.5);
+            glBegin(GL_QUADS);
+                glVertex2i(35, 55);
+                glVertex2i(65, 55);
+                glVertex2i(65, 75);
+                glVertex2i(35, 75);
+            glEnd();
+
+            glColor3f(0.7, 0.7, 0.7);
+            glBegin(GL_QUADS);
+                glVertex2i(46, 75);
+                glVertex2i(54, 75);
+                glVertex2i(54, 840);
+                glVertex2i(46, 840);
+            glEnd();
+            glColor3f(0.5, 0.5, 0.5);
+            drawCircle(50, 845, 10);
+            glColor3f(0.7, 0.7, 0.7);
+             glLineWidth(3.0f);
+            drawRingArc(50, 825.0f, 15.0f, true);
+            drawRingArc(50, 640.0f, 15.0f, true);
+
+            glColor3f(0.1, 0.1, 0.1);
+            glLineWidth(2.5f);
+            glBegin(GL_LINES);
+                glVertex2f(65.0f, 825.0f);
+                glVertex2f(65.0f, 220.0f);
+                glVertex2f(65.0f, 825.0f);
+                glVertex2f(62.0f, 825.0f);
+                glVertex2f(65.0f, 640.0f);
+                glVertex2f(62.0f, 640.0f);
+                glVertex2f(60.0f, 220.0f);
+                glVertex2f(65.0f, 220.0f);
+            glEnd();
+            glColor3f(0.2, 0.2, 0.2);
+            glBegin(GL_LINE_LOOP);
+                for(int i=0; i<360; i++) {
+                    float rad = i*M_PI/180.0f;
+                    glVertex2f(50.0f + cos(rad) * 10.0f, 220.0f + sin(rad) * 4.0f);
+                }
+            glEnd();
+            for (float x = 62.0f; x < 480.0f; x += 1.0f) {
+                float dist = x - 50.0f;
+                float yW = (dist * (0.15f * windScale)) * sin(0.05f * x + waveTime);
+                float xW = (dist * (0.03f * windScale)) * cos(0.05f * x + waveTime);
+
+                if (x < 160.0f) glColor3f(1.0, 1.0, 1.0);
+                else glColor3f(0.85, 0.0, 0.0);
+
+                glBegin(GL_QUAD_STRIP);
+                    glVertex2f(x + xW, 640.0f + yW);
+                    glVertex2f(x + xW, 825.0f + yW);
+                    float nx = x + 1.0f;
+                    float nYW = ((nx - 50.0f) * (0.15f * windScale)) * sin(0.05f * nx + waveTime);
+                    float nXW = ((nx - 50.0f) * (0.03f * windScale)) * cos(0.05f * nx + waveTime);
+                    glVertex2f(nx + nXW, 640.0f + nYW);
+                    glVertex2f(nx + nXW, 825.0f + nYW);
+                glEnd();
             }
-        glEnd();
+            glColor3f(1.0, 1.0, 1.0);
+            glBegin(GL_TRIANGLES);
+                float ywB = (110.0f * (0.15f * windScale)) * sin(8.0f + waveTime);
+                float xwB = (110.0f * (0.03f * windScale)) * cos(8.0f + waveTime);
+                float ywT = (170.0f * (0.15f * windScale)) * sin(11.0f + waveTime);
+                float xwT = (170.0f * (0.03f * windScale)) * cos(11.0f + waveTime);
 
+                for (float y = 640.0f; y < 825.0f; y += 37.0f) {
+                    glVertex2f(160.0f + xwB, y + ywB);
+                    glVertex2f(220.0f + xwT, y + 18.5f + ywT);
+                    glVertex2f(160.0f + xwB, y + 37.0f + ywB);
+                }
+            glEnd();
+        glPopMatrix();
+        glPushMatrix();
+            float cX = 750.0f, cY = 350.0f;
+            glTranslatef(logoX + cX, logoY + cY, 0.0f);
+            glRotatef(logoAngle, 0, 0, 1);
+            glScalef(logoScale, logoScale, 1.0f);
 
-        glColor3f(1.0f, 1.0f, 1.0f);
-       glBegin(GL_QUADS);
+            glColor3f(0.0, 0.51, 1.0);
+            glBegin(GL_POLYGON);
+                for (int i = 0; i <= 360; i++) {
+                    float r = (float)i * M_PI / 180.0f;
+                    glVertex2f(cos(r) * 110.0f, ((i > 180) ? -85.0f : 85.0f) + sin(r) * 110.0f);
+                }
+            glEnd();
 
-
-            glVertex2i(493, 170);
-            glVertex2i(507, 170);
-            glVertex2i(507, 430);
-             glVertex2i(493, 430);
-
-
-            glVertex2i(500, 438);
-            glVertex2i(507, 425);
-            glVertex2i(565, 370);
-            glVertex2i(553, 380);
-
-
-            glVertex2i(500, 162);
-            glVertex2i(507, 175);
-            glVertex2i(565, 230);
-             glVertex2i(555, 225);
-
-            glVertex2i(433, 235);
-             glVertex2i(445, 225);
-            glVertex2i(567, 375);
-             glVertex2i(555, 385);
-
-
-            glVertex2i(433, 365);
-            glVertex2i(445, 375);
-            glVertex2i(567, 225);
-            glVertex2i(555, 215);
-        glEnd();
-
+            glColor3f(1.0f, 1.0f, 1.0f);
+            glBegin(GL_QUADS);
+                glVertex2f(-7.0f, -90.0f);
+                glVertex2f(7.0f, -90.0f);
+                glVertex2f(7.0f, 90.0f);
+                glVertex2f(-7.0f, 90.0f);
+                glVertex2f(-62.0f, -55.0f);
+                glVertex2f(-48.0f, -55.0f);
+                glVertex2f(47.0f, 40.0f);
+                glVertex2f(33.0f, 40.0f);
+                glVertex2f(-62.0f, 55.0f);
+                glVertex2f(-48.0f, 55.0f);
+                glVertex2f(47.0f, -40.0f);
+                glVertex2f(33.0f, -40.0f);
+                glVertex2f(-7.0f, 90.0f);
+                glVertex2f(7.0f, 90.0f);
+                glVertex2f(47.0f, 40.0f);
+                 glVertex2f(33.0f, 40.0f);
+                glVertex2f(-7.0f, -90.0f);
+                glVertex2f(7.0f, -90.0f);
+                glVertex2f(47.0f, -40.0f);
+                 glVertex2f(33.0f, -40.0f);
+            glEnd();
+        glPopMatrix();
     glPopMatrix();
 
-    glutSwapBuffers();
+    glFlush();
 }
-
-
+void update() {
+    waveTime += 0.005f * windScale;
+    glutPostRedisplay();
+}
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
-    glutInitWindowSize(850, 650);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutCreateWindow("Infinite Thickness Bluetooth + Bahrain Flag");
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(1200, 750);
+    glutInitWindowPosition(20, 20);
+    glutIdleFunc(update);
+
+    glutCreateWindow("Animation included");
+
+    glClearColor(0.6, 0.8, 1.0, 1.0);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0, 850, 0, 650);
+    gluOrtho2D(0.0, 1200.0, 0.0, 750.0);
 
     glutDisplayFunc(display);
     glutKeyboardFunc(handleKeypress);
