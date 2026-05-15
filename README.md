@@ -1,11 +1,11 @@
-#  OpenGL Animation Project: Flag & Bluetooth Logo
+ OpenGL Animation Project: Flag & Bluetooth Logo
 
-##  Overview
+ Overview
 This project is developed using C++ and OpenGL (GLUT). It demonstrates 2D graphics animation including transformations, real-time motion, and wind simulation effects. The program renders a waving flag and a Bluetooth logo with continuous animation.
 
----
 
-##  Features
+
+Features
 
  Flag Animation
 - Realistic wind-based waving effect using sine and cosine functions
@@ -74,13 +74,12 @@ sin(0.05 * x + waveTime) and cos(0.05 * x + waveTime)
 This creates smooth and realistic cloth movement.
 
  Project Highlights
-✔ Real-time animation system  
-✔ Wind simulation effect  
-✔ Flag cloth physics approximation  
-✔ Continuous rendering loop  
-✔ OpenGL transformation system  
+Real-time animation system  
+Wind simulation effect  
+Flag cloth physics approximation  
+Continuous rendering loop   OpenGL transformation system  
 
 
  Author
-**Wubnesh Guade**  
-Computer Science Student – University of Gondar
+Wubnesh Guade 
+
