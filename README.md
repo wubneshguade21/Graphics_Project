@@ -26,7 +26,7 @@ This project is developed using C++ and OpenGL (GLUT). It demonstrates 2D graphi
 - Press `2` → increase wind speed
 - Wind affects wave intensity and animation speed
 
-### 📡 Bluetooth Logo
+Bluetooth Logo
 - Custom geometric design
 - Rotation and scaling support
 - Independent transformation system
@@ -81,6 +81,6 @@ This creates smooth and realistic cloth movement.
 ✔ OpenGL transformation system  
 
 
-## 👨‍💻 Author
+ Author
 **Wubnesh Guade**  
 Computer Science Student – University of Gondar
