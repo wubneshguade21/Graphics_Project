@@ -1,0 +1,96 @@
+#include <GL/glut.h> 
+#include <windows.h>
+#include <math.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+// --- GLOBAL STATES ---
+float logoX = 0.0f, logoY = 0.0f, logoAngle = 0.0f, logoScale = 1.0f;
+float flagX = 0.0f, flagY = 0.0f, flagAngle = 0.0f, flagScale = 1.0f;
+float waveTime = 0.0f;
+float windScale = 0.5f;
+float flagLift = 1.0f;
+
+// States required by the systems
+bool isNight = false;       // Toggles Day vs Night
+bool isAnimated = true;     // Controls whether stars dynamic twinkle is running
+
+
+void drawStars() {
+    srand(42); // Keeps stars in fixed positions on the screen
+    glBegin(GL_POINTS);
+    for (int i = 0; i < 150; i++) {
+        float x = (float)(rand() % 1200);
+        float y = (float)(rand() % 750);
+
+        // Dynamic twinkle calculation based on waveTime
+        float twinkle = isAnimated ? (sin(waveTime * 2.0f + i) * 0.5f + 0.5f) : 1.0f;
+        glColor3f(twinkle, twinkle, twinkle);
+        glVertex2f(x, y);
+    }
+    glEnd();
+}
+
+// --- FEATURE: BACKGROUND COLOR SWITCHING & DAY/NIGHT SKY ---
+void renderBackgroundSystem() {
+    if (isNight) {
+        // Night Sky Background Color
+        glClearColor(0.05f, 0.05f, 0.15f, 1.0f);
+    } else {
+        // Day Sky Background Color
+        glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
+    }
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // If night state is active, draw the stars over the background clear color
+    if (isNight) {
+        glPointSize(2.0f);
+        drawStars();
+    }
+}
+
+void drawCelestialBody(float cx, float cy, float r, int segments, bool isSun) {
+    glBegin(GL_POLYGON);
+    for (int i = 0; i < segments; i++) {
+        float theta = 2.0f * M_PI * float(i) / float(segments);
+        glVertex2f(cx + r * cosf(theta), cy + r * sinf(theta));
+    }
+    glEnd();
+
+    // Solar Rays Feature
+    if (isSun && !isNight) {
+        float rayPulse = isAnimated ? (sin(waveTime * 2.0f) * 0.1f + 0.9f) : 1.0f;
+        glColor3f(1.0f, 0.7f * rayPulse, 0.0f);
+        glLineWidth(2.0f);
+        glBegin(GL_LINES);
+        for (int i = 0; i < 12; i++) {
+            float theta = 2.0f * M_PI * float(i) / 12.0f;
+            glVertex2f(cx + r * cosf(theta), cy + r * sinf(theta));
+            glVertex2f(cx + (r * 1.5f) * cosf(theta), cy + (r * 1.5f) * sinf(theta));
+        }
+        glEnd();
+    }
+}
+
+// --- DRAWING HELPER FUNCTIONS ---
+void drawRingArc(float cx, float cy, float radius, bool isFront) {
+    glBegin(GL_LINE_STRIP);
+    int start = isFront ? 270 : 90;
+    int end = isFront ? 450 : 270;
+    for (int i = start; i <= end; i++) {
+        float rad = (float)i * M_PI / 180.0f;
+        glVertex2f(cx + cos(rad) * radius, cy + sin(rad) * (radius * 0.4f));
+    }
+    glEnd();
+}
+
+void drawCircle(float cx, float cy, float r) {
+    glBegin(GL_POLYGON);
+    for (int i = 0; i < 360; i++) {
+        float theta = 2.0f * M_PI * float(i) / 360.0f;
+        glVertex2f(cx + r * cosf(theta), cy + r * sinf(theta));
+    }
+    glEnd();
+} 
