@@ -1,0 +1,37 @@
+Feature Added
+Pause/Resume Animation System + Moon Translation Effect
+Description
+This contribution improves the OpenGL graphics project by introducing control over animation playback and adding dynamic movement to the moon.
+Users can now pause and resume all animations in real time, and the moon has been enhanced with smooth translation movement across the sky.
+Implemented Features
+Pause all animations (freeze system state)
+Resume animations (continue motion smoothly)
+Continuous moon translation in both X and Y directions
+Smooth orbital-like moon drifting motion
+Integration with existing day/night system
+Preserved animation consistency after resume
+Controls
+Press P → Pause all animations
+Press C → Resume animations
+Press X → Toggle Day/Night mode
+Mouse movement → Interactive celestial scaling
+Left click → Interaction with celestial objects
+Technical Details
+The feature is implemented using time-based animation control and transformation techniques:
+isAnimated flag → Master switch for all animations
+Conditional update loop inside update() function
+sin() and cos() functions → Smooth moon trajectory movement
+glTranslatef() → Applied moon displacement transformations
+State preservation → Ensures seamless resume after pause
+Frame-based animation control using waveTime
+Functions Added / Modified
+update() (enhanced with pause/resume logic)
+Moon translation logic (moonTranslateX, moonTranslateY)
+Integrated animation control system
+Additional Enhancements
+Smooth moon drifting path across sky
+Stable animation freeze without graphical glitches
+Seamless transition between paused and running states
+Improved user control over animation flow
+Author
+Sekeria
