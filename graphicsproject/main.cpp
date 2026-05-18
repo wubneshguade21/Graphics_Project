@@ -11,6 +11,27 @@ float waveTime = 0.0f;
 float windScale = 0.5f;
 float flagLift = 1.0f;
 
+void handleMouse(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+        int currentTime = glutGet(GLUT_ELAPSED_TIME);
+        float mouseX = (float)x;
+        float mouseY = (float)(750 - y);
+        float logoWorldCenterX = logoX + 750.0f;
+        float logoWorldCenterY = logoY + 350.0f;
+        float distance = sqrt(pow(mouseX - logoWorldCenterX, 2) + pow(mouseY - logoWorldCenterY, 2));
+
+        if (distance < 110.0f * logoScale) {
+            if (currentTime - lastClickTime < 300) {
+                isAnimated = !isAnimated;
+            } else {
+                isNight = !isNight;
+            }
+            lastClickTime = currentTime;
+        }
+    }
+    glutPostRedisplay();
+}
+
 
 void drawCelestialBody(float cx, float cy, float r, int segments, bool isSun) {
     glPushMatrix();
