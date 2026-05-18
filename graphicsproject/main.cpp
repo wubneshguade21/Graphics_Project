@@ -102,6 +102,20 @@ void drawCelestialBody(float cx, float cy, float r, int segments, bool isSun) {
     glPopMatrix();
 }
 
+void drawStars() {
+    srand(42);
+    glBegin(GL_POINTS);
+    for (int i = 0; i < 150; i++) {
+        float x = (float)(rand() % 1200);
+        float y = (float)(rand() % 750);
+        float twinkle = isAnimated ? (sin(waveTime * 2.0f + i) * 0.5f + 0.5f) : 1.0f;
+        glColor3f(twinkle, twinkle, twinkle);
+        glVertex2f(x, y);
+    }
+    glEnd();
+}
+
+
 
 
 void handleMouse(int button, int state, int x, int y) {
