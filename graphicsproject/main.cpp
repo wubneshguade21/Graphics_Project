@@ -11,6 +11,62 @@ float waveTime = 0.0f;
 float windScale = 0.5f;
 float flagLift = 1.0f;
 
+void renderText(float x, float y, std::string text, void* font, float r, float g, float b) {
+   glColor3f(r, g, b);
+   glRasterPos2f(x, y);
+   for (char c : text) {
+       glutBitmapCharacter(font, c);
+    }
+}
+
+void renderHUD() {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.65f);
+    glBegin(GL_QUADS);
+        glVertex2f(0, 685);
+        glVertex2f(1200, 685);
+        glVertex2f(1200, 750);
+        glVertex2f(0, 750);
+    glEnd();
+    glDisable(GL_BLEND);
+
+    if (isAnimated) {
+        renderText(15, 730, "[ STATUS: RUNNING ]", GLUT_BITMAP_HELVETICA_12, 0.2f, 1.0f, 0.2f);
+        renderText(15, 715, "Double-Click Logo to PAUSE", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
+   } else {
+        renderText(15, 730, "[ STATUS: PAUSED ]", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.2f, 0.2f);
+        renderText(15, 715, "Double-Click Logo to RESUME", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
+}
+    if (isNight) {
+        renderText(185, 730, "ENVIRONMENT: NIGHT (MOON)", GLUT_BITMAP_HELVETICA_12, 0.7f, 0.8f, 1.0f);
+        renderText(185, 715, "Single-Click Logo to shift DAY", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
+    } else {
+     renderText(185, 730, "ENVIRONMENT: DAYTIME (SUN)", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.9f, 0.0f);
+        renderText(185, 715, "Single-Click Logo to shift NIGHT", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
+  }
+
+    int windPercent = (int)((windScale / 3.0f) * 100.0f);
+    if (windPercent > 100) windPercent = 100;
+    std::string windStr = "WIND INTENSITY: " + std::to_string(windPercent) + "%";
+    renderText(400, 730, windStr, GLUT_BITMAP_HELVETICA_12, 0.3f, 0.8f, 1.0f);
+    renderText(400, 715, "Press '1' / '2' to Adjust", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
+
+    std::string zoomStr = "VIEW CAMERA ZOOM: " + std::to_string((int)(zoomFactor * 100)) + "%";
+    renderText(615, 730, zoomStr, GLUT_BITMAP_HELVETICA_12, 1.0f, 0.6f, 0.2f);
+    renderText(615, 715, "Press '8' Zoom Out / '9' In", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
+
+    std::string scalesStr = "SCALE -> Logo: " + std::to_string((int)(logoScale * 100)) + "% | Flag: " + std::to_string((int)(flagScale * 100)) + "%";
+    renderText(825, 730, scalesStr, GLUT_BITMAP_HELVETICA_10, 1.0f, 1.0f, 1.0f);
+    renderText(825, 715, "Keys: Logo [n,m] | Flag [b,u]", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
+
+    std::string rotStr = "ROTATION -> Logo: " + std::to_string((int)logoAngle % 360) + " deg | Flag: " + std::to_string((int)flagAngle % 360) + " deg";
+    renderText(825, 700, rotStr, GLUT_BITMAP_HELVETICA_10, 0.9f, 0.9f, 0.9f);
+
+    renderText(15, 695, "TRANSLATIONS (MOVE) -> Logo Keys: W, A, S, D  |  Flag Keys: G, H, J, Y", GLUT_BITMAP_HELVETICA_10, 0.8f, 0.8f, 0.8f);
+    renderText(400, 695, "ROTATION CONTROLS -> Logo Keys: R, T  |  Flag Keys: I, O", GLUT_BITMAP_HELVETICA_10, 0.8f, 0.8f, 0.8f);
+}
+
 
 
 void handleMouse(int button, int state, int x, int y) {
