@@ -1,0 +1,411 @@
+ #include <GL/glut.h>
+#include <windows.h>
+#include <math.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+// --- GLOBAL STATES ---
+float logoX = 0.0f, logoY = 0.0f, logoAngle = 0.0f, logoScale = 1.0f;
+float flagX = 0.0f, flagY = 0.0f, flagAngle = 0.0f, flagScale = 1.0f;
+float waveTime = 0.0f;
+float windScale = 0.5f;
+float flagLift = 1.0f;
+
+// States required by the systems
+bool isNight = false;       // Toggles Day vs Night
+bool isAnimated = true;     // Controls whether stars dynamic twinkle is running
+
+// --- COLLABORATOR 4 STATES ---
+float mouseX = 0.0f;
+float mouseY = 0.0f;
+float celestialHoverScale = 1.0f; // Scale modifier based on mouse detection
+int sunColorShift = 0;            // Color mode changed via single clicks
+int lastClickTime = 0;            // Tracker for double click calculation
+float sunRotationAngle = 0.0f;    // Rotational transformation for solar rays
+float sunDynamicPulse = 1.0f;     // Pulsing scalar transformation
+
+// Forward declaration of dynamic path variables
+float getCelestialX() { return 1100.0f + sin(waveTime * 0.2f) * 50.0f; }
+float getCelestialY() { return 650.0f + cos(waveTime * 0.2f) * 20.0f; }
+
+// ============================================================================
+// COLLABORATOR 1 — Day/Night Background System
+// ============================================================================
+
+void renderBackgroundSystem() {
+    if (isNight) {
+        glClearColor(0.03f, 0.03f, 0.1f, 1.0f);
+    } else {
+        glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
+    }
+    glClear(GL_COLOR_BUFFER_BIT);
+}
+
+// ============================================================================
+// COLLABORATOR 2 — Sun and Moon Animation
+// ============================================================================
+
+void drawCelestialBody(float cx, float cy, float r, int segments, bool isSun) {
+    glPushMatrix();
+    // Translate matrix directly to the center of the celestial body to handle local transformations
+    glTranslatef(cx, cy, 0.0f);
+
+    // Apply combined scale transformations (Hover Scale * Interactive Pulse)
+    float activeScale = celestialHoverScale;
+    if (isSun && !isNight) {
+        activeScale *= sunDynamicPulse;
+    }
+    glScalef(activeScale, activeScale, 1.0f);
+
+    // Draw Core Body (Centered at 0,0 now due to matrix transformation)
+    glBegin(GL_POLYGON);
+    for (int i = 0; i < segments; i++) {
+        float theta = 2.0f * M_PI * float(i) / float(segments);
+        glVertex2f(r * cosf(theta), r * sinf(theta));
+    }
+    glEnd();
+
+    // Solar Rays Feature with Rotational Transformation
+    if (isSun && !isNight) {
+        glPushMatrix();
+        // Apply spinning rotational transformation matrix to the solar rays
+        glRotatef(sunRotationAngle, 0.0f, 0.0f, 1.0f);
+
+        float rayPulse = isAnimated ? (sin(waveTime * 2.0f) * 0.1f + 0.9f) : 1.0f;
+
+        // Calculate dynamic reactive color blending based on mouse cursor position offset
+        float interactiveRedOffset = (mouseX / 1200.0f) * 0.3f;
+
+        if (sunColorShift == 1)      glColor3f(1.0f, (0.2f + interactiveRedOffset) * rayPulse, 0.0f);
+        else if (sunColorShift == 2) glColor3f(0.9f, 0.9f * rayPulse, 0.4f);
+        else                         glColor3f(1.0f, (0.6f + interactiveRedOffset) * rayPulse, 0.0f);
+
+        glLineWidth(2.5f);
+        glBegin(GL_LINES);
+        for (int i = 0; i < 16; i++) { // Increased ray count for richer rotational aesthetic
+            float theta = 2.0f * M_PI * float(i) / 16.0f;
+            glVertex2f(r * cosf(theta), r * sinf(theta));
+            glVertex2f((r * 1.6f) * cosf(theta), (r * 1.6f) * sinf(theta));
+        }
+        glEnd();
+        glPopMatrix();
+    }
+    glPopMatrix();
+}
+
+// ============================================================================
+// COLLABORATOR 3 — Stars and Night Effects
+// ============================================================================
+
+void renderNightEffects() {
+    if (!isNight) return;
+    srand(777);
+
+
+    glPointSize(1.0f);
+    glBegin(GL_POINTS);
+    for (int i = 0; i < 120; i++) {
+        float x = (float)(rand() % 1200);
+        float y = (float)(rand() % 750);
+        float twinkle = isAnimated ? (sin(waveTime * 5.0f + i) * 0.4f + 0.6f) : 0.8f;
+        glColor3f(twinkle * 0.7f, twinkle * 0.7f, twinkle * 0.9f);
+        glVertex2f(x, y);
+    }
+    glEnd();
+
+    glPointSize(3.0f);
+    glBegin(GL_POINTS);
+    for (int i = 0; i < 40; i++) {
+        float x = (float)(rand() % 1200);
+        float y = (float)(rand() % 750);
+        float twinkle = isAnimated ? (cos(waveTime * 2.5f + (i * 15)) * 0.5f + 0.5f) : 1.0f;
+        glColor3f(twinkle, twinkle, twinkle * 1.1f);
+        glVertex2f(x, y);
+    }
+    glEnd();
+}
+
+// ============================================================================
+// COLLABORATOR 4 — Mouse Interaction System
+// ============================================================================
+
+void handlePassiveMouseMotion(int x, int y) {
+    mouseX = (float)x;
+    mouseY = (float)(750 - y);
+
+    float targetX = getCelestialX();
+    float targetY = getCelestialY();
+    float distance = sqrtf((mouseX - targetX) * (mouseX - targetX) + (mouseY - targetY) * (mouseY - targetY));
+
+    // MOUSE DETECTION FEATURE: Scaling transformation trigger
+    if (distance < 90.0f) {
+        celestialHoverScale = 1.35f; // Scale up smoothly to 135% volume on proximity focus
+    } else {
+        celestialHoverScale = 1.0f;
+    }
+    glutPostRedisplay();
+}
+
+void handleMouseClicks(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+        int currentTime = glutGet(GLUT_ELAPSED_TIME);
+        int timeDiff = currentTime - lastClickTime;
+        lastClickTime = currentTime;
+
+        float targetX = getCelestialX();
+        float targetY = getCelestialY();
+        float dX = (float)x - targetX;
+        float dY = (float)(750 - y) - targetY;
+        float distance = sqrtf(dX * dX + dY * dY);
+
+        if (distance < 100.0f) {
+            // DOUBLE CLICK FEATURE: Fast double click toggles sky layout profile
+            if (timeDiff < 250) {
+                isNight = !isNight;
+            }
+            // SINGLE CLICK FEATURE: Changes core coloring palette matrix of the Sun
+            else {
+                sunColorShift = (sunColorShift + 1) % 3;
+            }
+        }
+        glutPostRedisplay();
+    }
+}
+
+// --- DRAWING HELPER FUNCTIONS ---
+void drawRingArc(float cx, float cy, float radius, bool isFront) {
+    glBegin(GL_LINE_STRIP);
+    int start = isFront ? 270 : 90;
+    int end = isFront ? 450 : 270;
+    for (int i = start; i <= end; i++) {
+        float rad = (float)i * M_PI / 180.0f;
+        glVertex2f(cx + cos(rad) * radius, cy + sin(rad) * (radius * 0.4f));
+    }
+    glEnd();
+}
+
+void drawCircle(float cx, float cy, float r) {
+    glBegin(GL_POLYGON);
+    for (int i = 0; i < 360; i++) {
+        float theta = 2.0f * M_PI * float(i) / 360.0f;
+        glVertex2f(cx + r * cosf(theta), cy + r * sinf(theta));
+    }
+    glEnd();
+}
+
+
+// --- INTERACTION LOGIC ---
+void handleKeypress(unsigned char key, int x, int y) {
+    switch (key) {
+        case 'w': logoY += 10.0f; break;
+        case 's': logoY -= 10.0f; break;
+        case 'a': logoX -= 10.0f; break;
+        case 'd': logoX += 10.0f; break;
+        case 'r': logoAngle += 5.0f; break;
+        case 't': logoAngle -= 5.0f; break;
+        case 'm': logoScale += 0.1f; break;
+        case 'n': if (logoScale > 0.1) logoScale -= 0.1f; break;
+        case 'y': flagY += 10.0f; break;
+        case 'h': flagY -= 10.0f; break;
+        case 'g': flagX -= 10.0f; break;
+        case 'j': flagX += 10.0f; break;
+        case 'i': flagAngle += 5.0f; break;
+        case 'o': flagAngle -= 5.0f; break;
+        case 'u': flagScale += 0.1f; break;
+        case 'b': if (flagScale > 0.1) flagScale -= 0.1f; break;
+        case '2': if (windScale < 3.0f) windScale += 0.1f; break;
+        case '1': if (windScale > 0.1f) windScale -= 0.1f; break;
+        case 'x': isNight = !isNight; break;
+        case 27: exit(0); break;
+    }
+    glutPostRedisplay();
+}
+
+// --- DISPLAY SYSTEM ---
+void display() {
+    renderBackgroundSystem();
+    renderNightEffects();
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    // --- RENDER CELESTIAL ENVIRONMENT ---
+    float pathX = getCelestialX();
+    float pathY = getCelestialY();
+
+    if (isNight) {
+        float moonGlow = isAnimated ? (sin(waveTime * 0.5f) * 5.0f) : 0.0f;
+        glColor3f(0.9f, 0.9f, 0.8f);
+        drawCelestialBody(pathX, pathY, 45.0f + (moonGlow * 0.1f), 40, false);
+
+        // Subtly offset clipping circle mask to simulate crescent phases
+        glColor3f(0.03f, 0.03f, 0.1f);
+        drawCelestialBody(pathX + 20.0f, pathY + 15.0f, 45.0f, 40, false);
+    } else {
+        // Interactive Dynamic Sun Core Shader Mapping
+        if (sunColorShift == 1)      glColor3f(0.95f, 0.25f, 0.05f); // Solar Eclipse Crimson Crimson
+        else if (sunColorShift == 2) glColor3f(0.95f, 0.95f, 0.7f);  // Supernova Flare White-Yellow
+        else                         glColor3f(1.0f, 0.85f, 0.0f);   // Classic Golden Amber
+
+        drawCelestialBody(pathX, pathY, 50.0f, 50, true);
+    }
+
+    // --- FLAGPOLE AND OBJECT RENDERING ---
+    glPushMatrix();
+        glPushMatrix();
+            glTranslatef(flagX, flagY, 0.0f);
+            glTranslatef(150, 0, 0);
+            glRotatef(flagAngle, 0, 0, 1);
+            glScalef(flagScale, flagScale, 1);
+            glTranslatef(-150, 0, 0);
+
+            glColor3f(0.0, 0.0, 1.0);
+            glBegin(GL_QUADS);
+                glVertex2i(10, 0); glVertex2i(90, 0); glVertex2i(90, 30); glVertex2i(10, 30);
+            glEnd();
+
+            glColor3f(0.6, 0.1, 0.6);
+            glBegin(GL_QUADS);
+                glVertex2i(25, 30); glVertex2i(75, 30); glVertex2i(75, 55); glVertex2i(25, 55);
+            glEnd();
+
+            glColor3f(0.3, 0.3, 0.5);
+            glBegin(GL_QUADS);
+                glVertex2i(35, 55); glVertex2i(65, 55); glVertex2i(65, 75); glVertex2i(35, 75);
+            glEnd();
+
+            glColor3f(0.7, 0.7, 0.7);
+            glBegin(GL_QUADS);
+                glVertex2i(46, 75); glVertex2i(54, 75); glVertex2i(54, 840); glVertex2i(46, 840);
+            glEnd();
+
+            glColor3f(0.5, 0.5, 0.5);
+            drawCircle(50, 845, 10);
+
+            glColor3f(0.7, 0.7, 0.7);
+            glLineWidth(3.0f);
+            drawRingArc(50, 825.0f, 15.0f, true);
+            drawRingArc(50, 640.0f, 15.0f, true);
+
+            glColor3f(0.1, 0.1, 0.1);
+            glLineWidth(2.5f);
+            glBegin(GL_LINES);
+                glVertex2f(65.0f, 825.0f); glVertex2f(65.0f, 220.0f);
+                glVertex2f(65.0f, 825.0f); glVertex2f(62.0f, 825.0f);
+                glVertex2f(65.0f, 640.0f); glVertex2f(62.0f, 640.0f);
+                glVertex2f(60.0f, 220.0f); glVertex2f(65.0f, 220.0f);
+            glEnd();
+
+
+            glColor3f(0.2, 0.2, 0.2);
+            glBegin(GL_LINE_LOOP);
+                for(int i=0; i<360; i++) {
+                    float rad = i*M_PI/180.0f;
+                    glVertex2f(50.0f + cos(rad) * 10.0f, 220.0f + sin(rad) * 4.0f);
+                }
+            glEnd();
+
+            for (float x = 62.0f; x < 480.0f; x += 1.0f) {
+                float dist = x - 50.0f;
+                float yW = (dist * (0.15f * windScale)) * sin(0.05f * x + waveTime);
+                float xW = (dist * (0.03f * windScale)) * cos(0.05f * x + waveTime);
+
+                if (x < 160.0f) glColor3f(1.0, 1.0, 1.0);
+                else glColor3f(0.85, 0.0, 0.0);
+
+                glBegin(GL_QUAD_STRIP);
+                    glVertex2f(x + xW, 640.0f + yW);
+                    glVertex2f(x + xW, 825.0f + yW);
+                    float nx = x + 1.0f;
+                    float nYW = ((nx - 50.0f) * (0.15f * windScale)) * sin(0.05f * nx + waveTime);
+                    float nXW = ((nx - 50.0f) * (0.03f * windScale)) * cos(0.05f * nx + waveTime);
+                    glVertex2f(nx + nXW, 640.0f + nYW);
+                    glVertex2f(nx + nXW, 825.0f + nXW);
+                glEnd();
+            }
+
+            glColor3f(1.0, 1.0, 1.0);
+            glBegin(GL_TRIANGLES);
+                float ywB = (110.0f * (0.15f * windScale)) * sin(8.0f + waveTime);
+                float xwB = (110.0f * (0.03f * windScale)) * cos(8.0f + waveTime);
+                float ywT = (170.0f * (0.15f * windScale)) * sin(11.0f + waveTime);
+                float xwT = (170.0f * (0.03f * windScale)) * cos(11.0f + waveTime);
+
+                for (float y = 640.0f; y < 825.0f; y += 37.0f) {
+                    glVertex2f(160.0f + xwB, y + ywB);
+                    glVertex2f(220.0f + xwT, y + 18.5f + ywT);
+                    glVertex2f(160.0f + xwB, y + 37.0f + ywB);
+                }
+            glEnd();
+        glPopMatrix();
+
+        glPushMatrix();
+            float cX = 750.0f, cY = 350.0f;
+            glTranslatef(logoX + cX, logoY + cY, 0.0f);
+            glRotatef(logoAngle, 0, 0, 1);
+            glScalef(logoScale, logoScale, 1.0f);
+
+            glColor3f(0.0, 0.51, 1.0);
+            glBegin(GL_POLYGON);
+                for (int i = 0; i <= 360; i++) {
+                    float r = (float)i * M_PI / 180.0f;
+                    glVertex2f(cos(r) * 110.0f, ((i > 180) ? -85.0f : 85.0f) + sin(r) * 110.0f);
+                }
+            glEnd();
+
+            glColor3f(1.0f, 1.0f, 1.0f);
+            glBegin(GL_QUADS);
+                glVertex2f(-7.0f, -90.0f); glVertex2f(7.0f, -90.0f); glVertex2f(7.0f, 90.0f); glVertex2f(-7.0f, 90.0f);
+                glVertex2f(-62.0f, -55.0f); glVertex2f(-48.0f, -55.0f); glVertex2f(47.0f, 40.0f); glVertex2f(33.0f, 40.0f);
+                glVertex2f(-62.0f, 55.0f); glVertex2f(-48.0f, 55.0f); glVertex2f(47.0f, -40.0f); glVertex2f(33.0f, -40.0f);
+                glVertex2f(-7.0f, 90.0f); glVertex2f(7.0f, 90.0f); glVertex2f(47.0f, 40.0f); glVertex2f(33.0f, 40.0f);
+                glVertex2f(-7.0f, -90.0f); glVertex2f(7.0f, -90.0f); glVertex2f(47.0f, -40.0f); glVertex2f(33.0f, -40.0f);
+            glEnd();
+        glPopMatrix();
+    glPopMatrix();
+
+    glFlush();
+}
+
+void update() {
+    waveTime += 0.005f * windScale;
+
+    // --- CONTINUOUS TRANSFORMATION MATHEMATICS ---
+    if (isAnimated) {
+        // 1. Angular Spin Transformation: Increments step rotation over time
+        sunRotationAngle += 0.25f;
+        if (sunRotationAngle > 360.0f) sunRotationAngle -= 360.0f;
+
+        // 2. Harmonic Scale Pulsing Transformation: Creates steady expansion loop
+        sunDynamicPulse = 1.0f + (sinf(waveTime * 3.5f) * 0.06f);
+    }
+
+    glutPostRedisplay();
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(1200, 750);
+    glutInitWindowPosition(20, 20);
+    glutIdleFunc(update);
+
+    glutCreateWindow("Integrated Framework - Advanced Sun Transformations");
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0.0, 1200.0, 0.0, 750.0);
+
+
+    glutDisplayFunc(display);
+    glutKeyboardFunc(handleKeypress);
+
+    glutPassiveMotionFunc(handlePassiveMouseMotion);
+    glutMouseFunc(handleMouseClicks);
+
+    glutMainLoop();
+    return 0;
+}
+
