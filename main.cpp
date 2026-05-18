@@ -10,7 +10,7 @@
 float logoX = 0.0f, logoY = 0.0f, logoAngle = 0.0f, logoScale = 1.0f;
 float flagX = 0.0f, flagY = 0.0f, flagAngle = 0.0f, flagScale = 1.0f;
 float waveTime = 0.0f;
-bool isAnimated = true;
+bool isAnimated = true;//this is git
 bool isNight = false;
 
 float zoomFactor = 1.0f;
