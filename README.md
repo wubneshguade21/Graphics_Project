@@ -167,7 +167,7 @@ Solution: Converted screen coordinates back into fixed world space (1200 × 750)
 Problem: GLUT does not natively support distinguishing single and double clicks, causing unintended mode switching.
 Solution: Implemented a timing threshold using glutGet(GLUT_ELAPSED_TIME). Clicks within 300 ms are treated as double-clicks (pause/resume), otherwise treated as single-click (mode toggle).
 
- the out put image
+ the out put image 
 
  <img width="1062" height="641" alt="flags" src="https://github.com/user-attachments/assets/c912de03-3f34-4eda-9108-cedfd47448d5" />
 <img width="1157" height="638" alt="flag12" src="https://github.com/user-attachments/assets/c37ed3dc-1a43-4867-98cb-551362f702b1" />
@@ -179,16 +179,29 @@ Solution: Implemented a timing threshold using glutGet(GLUT_ELAPSED_TIME). Click
 
 
 
-group member NAME           ID
- 1.Yeabsra andargachew       gur/o1154/16
- 2.Wubnesh guade              gur/02172/16
- 3.Dawit Atnkut               gur/
- 4.Surafel                      gur
- 5.Ayub
- 6.Meseret           
- 7 Sekeriya
+👥 Group Members
 
-│
-│
-└── assets/                  # Shared geometric design templates
-<img width="1157" height="638" alt="image" src="https://github.com/user-attachments/assets/de9f45d7-9e8d-4483-95d1-7d5cb939b025" />
+ No  >>>>>>>    Name >>>>>> ID 
+
+ 1 . Yeabsra Andargachew >>>>GUR/O1154/16 
+2  .Wubnesh Guade >>>>>>>>>> GUR/02172/16 
+3. Dawit Atinkut >>>>>>>>>GUR/... 
+4 . Surafel >>>>>>>>>>>>>>> GUR/... 
+5 . Ayub >>>>>>>>>>>>>>>>>>> GUR/...
+6 . Meseret>>>>>>>>>>>>>>>>> GUR/... |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
