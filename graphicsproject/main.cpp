@@ -10,6 +10,42 @@ float flagX = 0.0f, flagY = 0.0f, flagAngle = 0.0f, flagScale = 1.0f;
 float waveTime = 0.0f;
 float windScale = 0.5f;
 float flagLift = 1.0f;
+
+
+void drawCelestialBody(float cx, float cy, float r, int segments, bool isSun) {
+    glPushMatrix();
+    glTranslatef(cx, cy, 0.0f);
+
+    if (isSun && !isNight) {
+        glScalef(sunCorePulse, sunCorePulse, 1.0f);
+    }
+
+    glBegin(GL_POLYGON);
+    for (int i = 0; i < segments; i++) {
+        float theta = 2.0f * M_PI * float(i) / float(segments);
+        glVertex2f(r * cosf(theta), r * sinf(theta));
+    }
+    glEnd();
+
+    if (isSun && !isNight) {
+        glRotatef(sunRayRotation, 0.0f, 0.0f, 1.0f);
+        float rayPulse = isAnimated ? (sin(waveTime * 2.0f) * 0.1f + 0.9f) : 1.0f;
+        glColor3f(1.0f, 0.7f * rayPulse, 0.0f);
+        glLineWidth(2.0f);
+        glBegin(GL_LINES);
+        for (int i = 0; i < 16; i++) {
+            float theta = 2.0f * M_PI * float(i) / 16.0f;
+            glVertex2f(r * cosf(theta), r * sinf(theta));
+            glVertex2f((r * 1.5f) * cosf(theta), (r * 1.5f) * sinf(theta));
+        }
+        glEnd();
+    }
+    glPopMatrix();
+}
+
+
+
+
 void drawRingArc(float cx, float cy, float radius, bool isFront) {
     glBegin(GL_LINE_STRIP);
     int start = isFront ? 270 : 90;
