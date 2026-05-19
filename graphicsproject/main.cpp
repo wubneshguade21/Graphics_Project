@@ -219,6 +219,29 @@ void handleMouse(int button, int state, int x, int y) {
     glutPostRedisplay();
 }
 
+void timer(int value) {
+    float effectiveWind = (isAnimated) ? windScale : 0.15f;
+    if (effectiveWind < 0.1f) effectiveWind = 0.1f;
+
+    waveTime += (0.025f * effectiveWind);
+
+    if (isAnimated) {
+        if (!isNight && flagLift < 1.0f) flagLift += 0.005f;
+        if (isNight && flagLift > 0.0f) flagLift -= 0.005f;
+
+        sunRayRotation += 0.45f;
+        if (sunRayRotation > 360.0f) sunRayRotation -= 360.0f;
+
+        sunCorePulse = 1.0f + (sinf(waveTime * 2.5f) * 0.05f);
+
+        moonOrbitOffsetX = sinf(waveTime * 0.8f) * 20.0f;
+        moonOrbitOffsetY = cosf(waveTime * 0.4f) * 8.0f;
+        moonShadowMaskX = 20.0f + (sinf(waveTime * 0.5f) * 4.0f);
+    }
+
+    glutPostRedisplay();
+    glutTimerFunc(16, timer, 0);
+}
 
 
 void drawRingArc(float cx, float cy, float radius, bool isFront) {
