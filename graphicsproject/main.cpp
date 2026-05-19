@@ -1,22 +1,38 @@
-#include <GL/glut.h>
 #include <windows.h>
+#include <GL/glut.h>
 #include <math.h>
+#include <string>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
 float logoX = 0.0f, logoY = 0.0f, logoAngle = 0.0f, logoScale = 1.0f;
 float flagX = 0.0f, flagY = 0.0f, flagAngle = 0.0f, flagScale = 1.0f;
 float waveTime = 0.0f;
+
+bool isAnimated = true;
+bool isNight = false;
+
+float zoomFactor = 1.0f;
 float windScale = 0.5f;
 float flagLift = 1.0f;
 
-<<<<<<< HEAD
+int lastClickTime = 0;
+
+float sunRayRotation = 0.0f;
+float sunCorePulse = 1.0f;
+float moonOrbitOffsetX = 0.0f;
+float moonOrbitOffsetY = 0.0f;
+float moonShadowMaskX = 20.0f;
+
+float nightSkyR = 0.05f, nightSkyG = 0.05f, nightSkyB = 0.15f;
+
 void renderText(float x, float y, std::string text, void* font, float r, float g, float b) {
-   glColor3f(r, g, b);
-   glRasterPos2f(x, y);
-   for (char c : text) {
-       glutBitmapCharacter(font, c);
+    glColor3f(r, g, b);
+    glRasterPos2f(x, y);
+    for (char c : text) {
+        glutBitmapCharacter(font, c);
     }
 }
 
@@ -35,17 +51,18 @@ void renderHUD() {
     if (isAnimated) {
         renderText(15, 730, "[ STATUS: RUNNING ]", GLUT_BITMAP_HELVETICA_12, 0.2f, 1.0f, 0.2f);
         renderText(15, 715, "Double-Click Logo to PAUSE", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
-   } else {
+    } else {
         renderText(15, 730, "[ STATUS: PAUSED ]", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.2f, 0.2f);
         renderText(15, 715, "Double-Click Logo to RESUME", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
-}
+    }
+
     if (isNight) {
         renderText(185, 730, "ENVIRONMENT: NIGHT (MOON)", GLUT_BITMAP_HELVETICA_12, 0.7f, 0.8f, 1.0f);
         renderText(185, 715, "Single-Click Logo to shift DAY", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
     } else {
-     renderText(185, 730, "ENVIRONMENT: DAYTIME (SUN)", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.9f, 0.0f);
+        renderText(185, 730, "ENVIRONMENT: DAYTIME (SUN)", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.9f, 0.0f);
         renderText(185, 715, "Single-Click Logo to shift NIGHT", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
-  }
+    }
 
     int windPercent = (int)((windScale / 3.0f) * 100.0f);
     if (windPercent > 100) windPercent = 100;
@@ -64,70 +81,43 @@ void renderHUD() {
     std::string rotStr = "ROTATION -> Logo: " + std::to_string((int)logoAngle % 360) + " deg | Flag: " + std::to_string((int)flagAngle % 360) + " deg";
     renderText(825, 700, rotStr, GLUT_BITMAP_HELVETICA_10, 0.9f, 0.9f, 0.9f);
 
-    renderText(15, 695, "TRANSLATIONS (MOVE) -> Logo Keys: W, A, S, D  |  Flag Keys: G, H, J, Y", GLUT_BITMAP_HELVETICA_10, 0.8f, 0.8f, 0.8f);
-    renderText(400, 695, "ROTATION CONTROLS -> Logo Keys: R, T  |  Flag Keys: I, O", GLUT_BITMAP_HELVETICA_10, 0.8f, 0.8f, 0.8f);
+    renderText(15, 695, "TRANSLATIONS (MOVE) -> Logo Keys: W, A, S, D  |  Flag Keys: G, H, J, Y", GLUT_BITMAP_HELVETICA_10, 0.8f, 0.8f, 0.8f);
+    renderText(400, 695, "ROTATION CONTROLS -> Logo Keys: R, T  |  Flag Keys: I, O", GLUT_BITMAP_HELVETICA_10, 0.8f, 0.8f, 0.8f);
 }
 
+void drawCelestialBody(float cx, float cy, float r, int segments, bool isSun) {
+    glPushMatrix();
+    glTranslatef(cx, cy, 0.0f);
 
-void renderText(float x, float y, std::string text, void* font, float r, float g, float b) {
-    glColor3f(r, g, b);
-    glRasterPos2f(x, y);
-    for (char c : text) {
-        glutBitmapCharacter(font, c);
-    }
+    if (isSun && !isNight) {
+        glScalef(sunCorePulse, sunCorePulse, 1.0f);
+    }
+
+    glBegin(GL_POLYGON);
+    for (int i = 0; i < segments; i++) {
+        float theta = 2.0f * M_PI * float(i) / float(segments);
+        glVertex2f(r * cosf(theta), r * sinf(theta));
+    }
+    glEnd();
+
+    
+
+    if (isSun && !isNight) {
+        glRotatef(sunRayRotation, 0.0f, 0.0f, 1.0f);
+        float rayPulse = isAnimated ? (sin(waveTime * 2.0f) * 0.1f + 0.9f) : 1.0f;
+        glColor3f(1.0f, 0.7f * rayPulse, 0.0f);
+        glLineWidth(2.0f);
+        glBegin(GL_LINES);
+        for (int i = 0; i < 16; i++) {
+            float theta = 2.0f * M_PI * float(i) / 16.0f;
+            glVertex2f(r * cosf(theta), r * sinf(theta));
+            glVertex2f((r * 1.5f) * cosf(theta), (r * 1.5f) * sinf(theta));
+        }
+        glEnd();
+    }
+    glPopMatrix();
 }
 
-void renderHUD() {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(0.0f, 0.0f, 0.0f, 0.65f);
-    glBegin(GL_QUADS);
-        glVertex2f(0, 685);
-        glVertex2f(1200, 685);
-        glVertex2f(1200, 750);
-        glVertex2f(0, 750);
-    glEnd();
-    glDisable(GL_BLEND);
-
-    if (isAnimated) {
-        renderText(15, 730, "[ STATUS: RUNNING ]", GLUT_BITMAP_HELVETICA_12, 0.2f, 1.0f, 0.2f);
-        renderText(15, 715, "Double-Click Logo to PAUSE", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
-    } else {
-        renderText(15, 730, "[ STATUS: PAUSED ]", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.2f, 0.2f);
-        renderText(15, 715, "Double-Click Logo to RESUME", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
-    }
-
-    if (isNight) {
-        renderText(185, 730, "ENVIRONMENT: NIGHT (MOON)", GLUT_BITMAP_HELVETICA_12, 0.7f, 0.8f, 1.0f);
-        renderText(185, 715, "Single-Click Logo to shift DAY", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
-    } else {
-        renderText(185, 730, "ENVIRONMENT: DAYTIME (SUN)", GLUT_BITMAP_HELVETICA_12, 1.0f, 0.9f, 0.0f);
-        renderText(185, 715, "Single-Click Logo to shift NIGHT", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
-    }
-
-    int windPercent = (int)((windScale / 3.0f) * 100.0f);
-    if (windPercent > 100) windPercent = 100;
-    std::string windStr = "WIND INTENSITY: " + std::to_string(windPercent) + "%";
-    renderText(400, 730, windStr, GLUT_BITMAP_HELVETICA_12, 0.3f, 0.8f, 1.0f);
-    renderText(400, 715, "Press '1' / '2' to Adjust", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
-
-    std::string zoomStr = "VIEW CAMERA ZOOM: " + std::to_string((int)(zoomFactor * 100)) + "%";
-    renderText(615, 730, zoomStr, GLUT_BITMAP_HELVETICA_12, 1.0f, 0.6f, 0.2f);
-    renderText(615, 715, "Press '8' Zoom Out / '9' In", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
-
-    std::string scalesStr = "SCALE -> Logo: " + std::to_string((int)(logoScale * 100)) + "% | Flag: " + std::to_string((int)(flagScale * 100)) + "%";
-    renderText(825, 730, scalesStr, GLUT_BITMAP_HELVETICA_10, 1.0f, 1.0f, 1.0f);
-    renderText(825, 715, "Keys: Logo [n,m] | Flag [b,u]", GLUT_BITMAP_HELVETICA_10, 0.7f, 0.7f, 0.7f);
-
-    std::string rotStr = "ROTATION -> Logo: " + std::to_string((int)logoAngle % 360) + " deg | Flag: " + std::to_string((int)flagAngle % 360) + " deg";
-    renderText(825, 700, rotStr, GLUT_BITMAP_HELVETICA_10, 0.9f, 0.9f, 0.9f);
-
-    renderText(15, 695, "TRANSLATIONS (MOVE) -> Logo Keys: W, A, S, D  |  Flag Keys: G, H, J, Y", GLUT_BITMAP_HELVETICA_10, 0.8f, 0.8f, 0.8f);
-    renderText(400, 695, "ROTATION CONTROLS -> Logo Keys: R, T  |  Flag Keys: I, O", GLUT_BITMAP_HELVETICA_10, 0.8f, 0.8f, 0.8f);
-}
-
-
-=======
 void handleMouse(int button, int state, int x, int y) {
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
         int currentTime = glutGet(GLUT_ELAPSED_TIME);
@@ -149,72 +139,29 @@ void handleMouse(int button, int state, int x, int y) {
     glutPostRedisplay();
 }
 
->>>>>>> origin/dave-mousehandling
-
-void drawCelestialBody(float cx, float cy, float r, int segments, bool isSun) {
-    glPushMatrix();
-    glTranslatef(cx, cy, 0.0f);
-
-    if (isSun && !isNight) {
-        glScalef(sunCorePulse, sunCorePulse, 1.0f);
-    }
-
-    glBegin(GL_POLYGON);
-    for (int i = 0; i < segments; i++) {
-        float theta = 2.0f * M_PI * float(i) / float(segments);
-        glVertex2f(r * cosf(theta), r * sinf(theta));
-    }
-    glEnd();
-
-    if (isSun && !isNight) {
-        glRotatef(sunRayRotation, 0.0f, 0.0f, 1.0f);
-        float rayPulse = isAnimated ? (sin(waveTime * 2.0f) * 0.1f + 0.9f) : 1.0f;
-        glColor3f(1.0f, 0.7f * rayPulse, 0.0f);
-        glLineWidth(2.0f);
-        glBegin(GL_LINES);
-        for (int i = 0; i < 16; i++) {
-            float theta = 2.0f * M_PI * float(i) / 16.0f;
-            glVertex2f(r * cosf(theta), r * sinf(theta));
-            glVertex2f((r * 1.5f) * cosf(theta), (r * 1.5f) * sinf(theta));
-        }
-        glEnd();
-    }
-    glPopMatrix();
-}
-
-void drawStars() {
-    srand(42);
-    glBegin(GL_POINTS);
-    for (int i = 0; i < 150; i++) {
-        float x = (float)(rand() % 1200);
-        float y = (float)(rand() % 750);
-        float twinkle = isAnimated ? (sin(waveTime * 2.0f + i) * 0.5f + 0.5f) : 1.0f;
-        glColor3f(twinkle, twinkle, twinkle);
-        glVertex2f(x, y);
-    }
-    glEnd();
-}
-
-
-
-
-void handleMouse(int button, int state, int x, int y) {
-    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-        int currentTime = glutGet(GLUT_ELAPSED_TIME);
-        float mouseX = (float)x;
-        float mouseY = (float)(750 - y);
-        float logoWorldCenterX = logoX + 750.0f;
-        float logoWorldCenterY = logoY + 350.0f;
-        float distance = sqrt(pow(mouseX - logoWorldCenterX, 2) + pow(mouseY - logoWorldCenterY, 2));
-
-        if (distance < 110.0f * logoScale) {
-            if (currentTime - lastClickTime < 300) {
-                isAnimated = !isAnimated;
-            } else {
-                isNight = !isNight;
-            }
-            lastClickTime = currentTime;
-        }
+void handleKeypress(unsigned char key, int x, int y) {
+    switch (key) {
+        case 'w': logoY += 10.0f; break;
+        case 's': logoY -= 10.0f; break;
+        case 'a': logoX -= 10.0f; break;
+        case 'd': logoX += 10.0f; break;
+        case 'r': logoAngle += 5.0f; break;
+        case 't': logoAngle -= 5.0f; break;
+        case 'm': if (logoScale < 1.0f) logoScale += 0.1f; if (logoScale > 1.0f) logoScale = 1.0f; break;
+        case 'n': if (logoScale > 0.0f) logoScale -= 0.1f; if (logoScale < 0.0f) logoScale = 0.0f; break;
+        case 'y': flagY += 10.0f; break;
+        case 'h': flagY -= 10.0f; break;
+        case 'g': flagX -= 10.0f; break;
+        case 'j': flagX += 10.0f; break;
+        case 'i': flagAngle += 5.0f; break;
+        case 'o': flagAngle -= 5.0f; break;
+        case 'u': if (flagScale < 1.0f) flagScale += 0.1f; if (flagScale > 1.0f) flagScale = 1.0f; break;
+        case 'b': if (flagScale > 0.0f) flagScale -= 0.1f; if (flagScale < 0.0f) flagScale = 0.0f; break;
+        case '8': zoomFactor += 0.1f; break;
+        case '9': if (zoomFactor > 0.2) zoomFactor -= 0.1f; break;
+        case '2': if (windScale < 3.0f) windScale += 0.1f; break;
+        case '1': if (windScale > 0.1f) windScale -= 0.1f; break;
+        case 27: exit(0); break;
     }
     glutPostRedisplay();
 }
@@ -246,7 +193,7 @@ void timer(int value) {
     glutTimerFunc(16, timer, 0);
 }
 
-// Inside display()
+
 glPushMatrix();
     glTranslatef(flagX, flagY, 0.0f);
     glTranslatef(150, 0, 0);
@@ -261,13 +208,13 @@ glPushMatrix();
     float flagStart = 62.0f;
     float poleHeight = 840.0f;
 
-    // Flag pole and decorations
+ 
     glColor3f(0.0f, 0.0f, 1.0f); glRecti(10, 0, 90, 30);
     glColor3f(0.6f, 0.1f, 0.6f); glRecti(25, 30, 75, 55);
     glColor3f(0.3f, 0.3f, 0.5f); glRecti(35, 55, 65, 75);
     glColor3f(0.7f, 0.7f, 0.7f); glRecti(46, 75, 54, poleHeight);
 
-    // Rope and rings
+
     float ringRadius = 15.0f;
     glColor3f(0.7f, 0.7f, 0.7f); glLineWidth(3.0f);
     drawRingArc(50, (float)flagTop, ringRadius, true);
@@ -282,7 +229,7 @@ glPushMatrix();
         glVertex2f(50.0f + 10.0f, tieOffY); glVertex2f(ropeStartX, tieOffY);
     glEnd();
 
-    // Waving flag effect
+ 
     float currentWind = (isAnimated) ? windScale : 0.3f;
     for (float x = flagStart; x < 480.0f; x += 1.0f) {
         float distFromPole = (x - 50);
@@ -303,7 +250,7 @@ glPushMatrix();
         glEnd();
     }
 
-    // Triangular flag details
+
     glColor3f(1.0f, 1.0f, 1.0f);
     glBegin(GL_TRIANGLES);
     float triH = (float)(flagTop - flagBottom) / 5.0f;
@@ -320,7 +267,7 @@ glPushMatrix();
     glEnd();
 glPopMatrix();
 
-// Logo drawing
+
 glPushMatrix();
     float cX = 750.0f, cY = 350.0f;
     float breath = isAnimated ? (float)(0.06 * sin(waveTime * 1.2)) : 0.0f;
@@ -346,9 +293,7 @@ glPushMatrix();
         glVertex2f(-7.0f, -90.0f); glVertex2f(7.0f, -90.0f);
         glVertex2f(7.0f, 
 
-
-
-
+        
 void drawRingArc(float cx, float cy, float radius, bool isFront) {
     glBegin(GL_LINE_STRIP);
     int start = isFront ? 270 : 90;
@@ -360,44 +305,54 @@ void drawRingArc(float cx, float cy, float radius, bool isFront) {
     glEnd();
 }
 
-void drawCircle(float cx, float cy, float r) {
-    glBegin(GL_POLYGON);
-    for (int i = 0; i < 360; i++) {
-        float theta = 2.0f * M_PI * float(i) / 360.0f;
-        glVertex2f(cx + r * cosf(theta), cy + r * sinf(theta));
+void drawStars() {
+    srand(42);
+    glBegin(GL_POINTS);
+    for (int i = 0; i < 150; i++) {
+        float x = (float)(rand() % 1200);
+        float y = (float)(rand() % 750);
+        float twinkle = isAnimated ? (sin(waveTime * 2.0f + i) * 0.5f + 0.5f) : 1.0f;
+        glColor3f(twinkle, twinkle, twinkle);
+        glVertex2f(x, y);
     }
     glEnd();
 }
-void handleKeypress(unsigned char key, int x, int y) {
-    switch (key) {
-        case 'w': logoY += 10.0f; break;
-        case 's': logoY -= 10.0f; break;
-        case 'a': logoX -= 10.0f; break;
-        case 'd': logoX += 10.0f; break;
-        case 'r': logoAngle += 5.0f; break;
-        case 't': logoAngle -= 5.0f; break;
-        case 'm': logoScale += 0.1f; break;
-        case 'n': if (logoScale > 0.1) logoScale -= 0.1f; break;
-        case 'y': flagY += 10.0f; break;
-        case 'h': flagY -= 10.0f; break;
-        case 'g': flagX -= 10.0f; break;
-        case 'j': flagX += 10.0f; break;
-        case 'i': flagAngle += 5.0f; break;
-        case 'o': flagAngle -= 5.0f; break;
-        case 'u': flagScale += 0.1f; break;
-        case 'b': if (flagScale > 0.1) flagScale -= 0.1f; break;
-        case '2': if (windScale < 3.0f) windScale += 0.1f; break;
-        case '1': if (windScale > 0.1f) windScale -= 0.1f; break;
-        case 27: exit(0); break;
-    }
-    glutPostRedisplay();
-}
+
+
+
 void display() {
+    if (isNight) glClearColor(nightSkyR, nightSkyG, nightSkyB, 1.0f);
+    else glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+
+    if (isNight) {
+        glPointSize(2.0f);
+        drawStars();
+    }
 
     glPushMatrix();
+        glTranslatef(600, 375, 0);
+        glScalef(zoomFactor, zoomFactor, 1.0f);
+        glTranslatef(-600, -375, 0);
+
+        float pathX = 1100.0f + sin(waveTime * 0.2f) * 50.0f;
+        float pathY = 650.0f + cos(waveTime * 0.2f) * 20.0f;
+
+        if (isNight) {
+            float animatedPathX = pathX + moonOrbitOffsetX;
+            float animatedPathY = pathY + moonOrbitOffsetY;
+
+            float moonGlow = isAnimated ? (sin(waveTime * 0.5f) * 5.0f) : 0.0f;
+            glColor3f(0.9f, 0.9f, 0.8f);
+            drawCelestialBody(animatedPathX, animatedPathY, 45 + (moonGlow * 0.1f), 40, false);
+
+            glColor3f(nightSkyR, nightSkyG, nightSkyB);
+            drawCelestialBody(animatedPathX + moonShadowMaskX, animatedPathY + 15, 45, 40, false);
+        } else {
+            glColor3f(1.0f, 0.9f, 0.0f);
+            drawCelestialBody(pathX, pathY, 50, 50, true);
+        }
+
         glPushMatrix();
             glTranslatef(flagX, flagY, 0.0f);
             glTranslatef(150, 0, 0);
@@ -406,107 +361,97 @@ void display() {
             glTranslatef(-150, 0, 0);
 
             float tieOffY = 220.0f;
-            int flagBottom = 640;
-            int flagTop = 825;
+            float liftMax = 420.0f;
+            int flagBottom = (int)tieOffY + (int)(flagLift * liftMax);
+            int flagTop = flagBottom + 185;
             float flagStart = 62.0f;
-            int poleHeight = 840;
-            glColor3f(0.0, 0.0, 1.0);
-            glBegin(GL_QUADS);
-                glVertex2i(10, 0);
-                 glVertex2i(90, 0);
-                 glVertex2i(90, 30);
-                 glVertex2i(10, 30);
-            glEnd();
+            float poleHeight = 840.0f;
 
+            glColor3f(0.0f, 0.0f, 1.0f);
+            glRecti(10, 0, 90, 30);
+            glColor3f(0.6f, 0.1f, 0.6f);
+            glRecti(25, 30, 75, 55);
+            glColor3f(0.3f, 0.3f, 0.5f);
+            glRecti(35, 55, 65, 75);
+            glColor3f(0.7f, 0.7f, 0.7f);
+            glRecti(46, 75, 54, poleHeight);
+            glColor3f(0.5f, 0.5f, 0.5f);
+            drawCelestialBody(50, poleHeight + 5, 10, 30, false);
 
-            glColor3f(0.6, 0.1, 0.6);
-            glBegin(GL_QUADS);
-                glVertex2i(25, 30);
-                glVertex2i(75, 30);
-                glVertex2i(75, 55);
-                glVertex2i(25, 55);
-            glEnd();
+            float ringRadius = 15.0f;
+            glColor3f(0.7f, 0.7f, 0.7f); glLineWidth(3.0f);
+            drawRingArc(50, (float)flagTop, ringRadius, true);
+            drawRingArc(50, (float)flagBottom, ringRadius, true);
 
-            glColor3f(0.3, 0.3, 0.5);
-            glBegin(GL_QUADS);
-                glVertex2i(35, 55);
-                glVertex2i(65, 55);
-                glVertex2i(65, 75);
-                glVertex2i(35, 75);
-            glEnd();
-
-            glColor3f(0.7, 0.7, 0.7);
-            glBegin(GL_QUADS);
-                glVertex2i(46, 75);
-                glVertex2i(54, 75);
-                glVertex2i(54, 840);
-                glVertex2i(46, 840);
-            glEnd();
-            glColor3f(0.5, 0.5, 0.5);
-            drawCircle(50, 845, 10);
-            glColor3f(0.7, 0.7, 0.7);
-             glLineWidth(3.0f);
-            drawRingArc(50, 825.0f, 15.0f, true);
-            drawRingArc(50, 640.0f, 15.0f, true);
-
-            glColor3f(0.1, 0.1, 0.1);
+            float ropeStartX = 50 + ringRadius;
+            if (isNight) glColor3f(0.3f, 0.3f, 0.4f); else glColor3f(0.1f, 0.1f, 0.1f);
             glLineWidth(2.5f);
             glBegin(GL_LINES);
-                glVertex2f(65.0f, 825.0f);
-                glVertex2f(65.0f, 220.0f);
-                glVertex2f(65.0f, 825.0f);
-                glVertex2f(62.0f, 825.0f);
-                glVertex2f(65.0f, 640.0f);
-                glVertex2f(62.0f, 640.0f);
-                glVertex2f(60.0f, 220.0f);
-                glVertex2f(65.0f, 220.0f);
+                glVertex2f(ropeStartX, (float)flagTop); glVertex2f(ropeStartX, tieOffY);
+                glVertex2f(ropeStartX, (float)flagTop); glVertex2f(flagStart, (float)flagTop);
+                glVertex2f(ropeStartX, (float)flagBottom); glVertex2f(flagStart, (float)flagBottom);
+                glVertex2f(50.0f + 10.0f, tieOffY); glVertex2f(ropeStartX, tieOffY);
             glEnd();
-            glColor3f(0.2, 0.2, 0.2);
+
+            glColor3f(0.2f, 0.2f, 0.2f);
             glBegin(GL_LINE_LOOP);
-                for(int i=0; i<360; i++) {
-                    float rad = i*M_PI/180.0f;
-                    glVertex2f(50.0f + cos(rad) * 10.0f, 220.0f + sin(rad) * 4.0f);
+                for (int i = 0; i < 360; i++) {
+                    float rad = i * M_PI / 180.0f;
+                    glVertex2f(50 + cos(rad) * 10, tieOffY + sin(rad) * 4);
                 }
             glEnd();
-            for (float x = 62.0f; x < 480.0f; x += 1.0f) {
-                float dist = x - 50.0f;
-                float yW = (dist * (0.15f * windScale)) * sin(0.05f * x + waveTime);
-                float xW = (dist * (0.03f * windScale)) * cos(0.05f * x + waveTime);
 
-                if (x < 160.0f) glColor3f(1.0, 1.0, 1.0);
-                else glColor3f(0.85, 0.0, 0.0);
+            float currentWind = (isAnimated) ? windScale : 0.3f;
+            for (float x = flagStart; x < 480.0f; x += 1.0f) {
+                float distFromPole = (x - 50);
+                float yWave = (distFromPole * (0.15f * currentWind)) * sin(0.05f * x + waveTime);
+                float xWave = (distFromPole * (0.03f * currentWind)) * cos(0.05f * x + waveTime);
+
+                if (x < 160.0f) glColor3f(1.0f, 1.0f, 1.0f);
+                else glColor3f(0.85f, 0.0f, 0.0f);
+
+                
 
                 glBegin(GL_QUAD_STRIP);
-                    glVertex2f(x + xW, 640.0f + yW);
-                    glVertex2f(x + xW, 825.0f + yW);
-                    float nx = x + 1.0f;
-                    float nYW = ((nx - 50.0f) * (0.15f * windScale)) * sin(0.05f * nx + waveTime);
-                    float nXW = ((nx - 50.0f) * (0.03f * windScale)) * cos(0.05f * nx + waveTime);
-                    glVertex2f(nx + nXW, 640.0f + nYW);
-                    glVertex2f(nx + nXW, 825.0f + nYW);
+                    glVertex2f(x + xWave, (float)flagBottom + yWave);
+                    glVertex2f(x + xWave, (float)flagTop + yWave);
+                    float nextX = x + 1.0f;
+                    float nYW = ((nextX - 50) * (0.15f * currentWind)) * sin(0.05f * nextX + waveTime);
+                    float nXW = ((nextX - 50) * (0.03f * currentWind)) * cos(0.05f * nextX + waveTime);
+                    glVertex2f(nextX + nXW, (float)flagBottom + nYW);
+                    glVertex2f(nextX + nXW, (float)flagTop + nYW);
                 glEnd();
             }
-            glColor3f(1.0, 1.0, 1.0);
-            glBegin(GL_TRIANGLES);
-                float ywB = (110.0f * (0.15f * windScale)) * sin(8.0f + waveTime);
-                float xwB = (110.0f * (0.03f * windScale)) * cos(8.0f + waveTime);
-                float ywT = (170.0f * (0.15f * windScale)) * sin(11.0f + waveTime);
-                float xwT = (170.0f * (0.03f * windScale)) * cos(11.0f + waveTime);
 
-                for (float y = 640.0f; y < 825.0f; y += 37.0f) {
-                    glVertex2f(160.0f + xwB, y + ywB);
-                    glVertex2f(220.0f + xwT, y + 18.5f + ywT);
-                    glVertex2f(160.0f + xwB, y + 37.0f + ywB);
-                }
+            glColor3f(1.0f, 1.0f, 1.0f);
+            glBegin(GL_TRIANGLES);
+            float triH = (float)(flagTop - flagBottom) / 5.0f;
+            for (float y = (float)flagBottom; y < (float)flagTop; y += triH) {
+                float ywB = ((160.0f - 50) * (0.15f * currentWind)) * sin(0.05f * 160.0f + waveTime);
+                float xwB = ((160.0f - 50) * (0.03f * currentWind)) * cos(0.05f * 160.0f + waveTime);
+                float tX = 160.0f + 60.0f;
+                float ywT = ((tX - 50) * (0.15f * currentWind)) * sin(0.05f * tX + waveTime);
+                float xwT = ((tX - 50) * (0.03f * currentWind)) * cos(0.05f * tX + waveTime);
+                glVertex2f(160.0f + xwB, y + ywB);
+                glVertex2f(tX + xwT, y + (triH / 2.0f) + ywT);
+                glVertex2f(160.0f + xwB, y + triH + ywB);
+            }
             glEnd();
         glPopMatrix();
+
         glPushMatrix();
             float cX = 750.0f, cY = 350.0f;
+            float breath = isAnimated ? (float)(0.06 * sin(waveTime * 1.2)) : 0.0f;
+            float bluePulse = isAnimated ? (float)(0.85 + (0.15 * sin(waveTime * 1.5))) : 1.0f;
+
             glTranslatef(logoX + cX, logoY + cY, 0.0f);
             glRotatef(logoAngle, 0, 0, 1);
-            glScalef(logoScale, logoScale, 1.0f);
+            glScalef(logoScale + breath, logoScale + breath, 1.0f);
 
-            glColor3f(0.0, 0.51, 1.0);
+            if (isNight) glColor3f(0.2f, 0.2f, 0.4f);
+            else glColor3f(0.0f, 0.51f, bluePulse);
+            if (!isAnimated) glColor3f(0.5f, 0.5f, 0.5f);
+
             glBegin(GL_POLYGON);
                 for (int i = 0; i <= 360; i++) {
                     float r = (float)i * M_PI / 180.0f;
@@ -520,49 +465,43 @@ void display() {
                 glVertex2f(7.0f, -90.0f);
                 glVertex2f(7.0f, 90.0f);
                 glVertex2f(-7.0f, 90.0f);
-                glVertex2f(-62.0f, -55.0f);
-                glVertex2f(-48.0f, -55.0f);
-                glVertex2f(47.0f, 40.0f);
-                glVertex2f(33.0f, 40.0f);
-                glVertex2f(-62.0f, 55.0f);
-                glVertex2f(-48.0f, 55.0f);
-                glVertex2f(47.0f, -40.0f);
-                glVertex2f(33.0f, -40.0f);
+                glVertex2f(-55.0f - 7.0f, -55.0f);
+                glVertex2f(-55.0f + 7.0f, -55.0f);
+                glVertex2f(40.0f + 7.0f, 40.0f);
+                glVertex2f(40.0f - 7.0f, 40.0f);
+                glVertex2f(-55.0f - 7.0f, 55.0f);
+                glVertex2f(-55.0f + 7.0f, 55.0f);
+                glVertex2f(40.0f + 7.0f, -40.0f);
+                glVertex2f(40.0f - 7.0f, -40.0f);
                 glVertex2f(-7.0f, 90.0f);
                 glVertex2f(7.0f, 90.0f);
-                glVertex2f(47.0f, 40.0f);
-                 glVertex2f(33.0f, 40.0f);
+                glVertex2f(40.0f + 7.0f, 40.0f);
+                glVertex2f(40.0f - 7.0f, 40.0f);
                 glVertex2f(-7.0f, -90.0f);
                 glVertex2f(7.0f, -90.0f);
-                glVertex2f(47.0f, -40.0f);
-                 glVertex2f(33.0f, -40.0f);
+                glVertex2f(40.0f + 7.0f, -40.0f);
+                glVertex2f(40.0f - 7.0f, -40.0f);
             glEnd();
         glPopMatrix();
     glPopMatrix();
+    renderHUD();
 
-    glFlush();
+    glutSwapBuffers();
 }
-void update() {
-    waveTime += 0.005f * windScale;
-    glutPostRedisplay();
-}
+
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(1200, 750);
-    glutInitWindowPosition(20, 20);
-    glutIdleFunc(update);
-
-    glutCreateWindow("Animation included");
-
-    glClearColor(0.6, 0.8, 1.0, 1.0);
-
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutCreateWindow("Bahrain flag with Bluethooth Simulation");
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0.0, 1200.0, 0.0, 750.0);
+    gluOrtho2D(0, 1200, 0, 750);
 
     glutDisplayFunc(display);
     glutKeyboardFunc(handleKeypress);
+    glutMouseFunc(handleMouse);
+    glutTimerFunc(0, timer, 0);
 
     glutMainLoop();
     return 0;
