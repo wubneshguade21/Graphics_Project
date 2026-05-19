@@ -246,6 +246,106 @@ void timer(int value) {
     glutTimerFunc(16, timer, 0);
 }
 
+// Inside display()
+glPushMatrix();
+    glTranslatef(flagX, flagY, 0.0f);
+    glTranslatef(150, 0, 0);
+    glRotatef(flagAngle, 0, 0, 1);
+    glScalef(flagScale, flagScale, 1);
+    glTranslatef(-150, 0, 0);
+
+    float tieOffY = 220.0f;
+    float liftMax = 420.0f;
+    int flagBottom = (int)tieOffY + (int)(flagLift * liftMax);
+    int flagTop = flagBottom + 185;
+    float flagStart = 62.0f;
+    float poleHeight = 840.0f;
+
+    // Flag pole and decorations
+    glColor3f(0.0f, 0.0f, 1.0f); glRecti(10, 0, 90, 30);
+    glColor3f(0.6f, 0.1f, 0.6f); glRecti(25, 30, 75, 55);
+    glColor3f(0.3f, 0.3f, 0.5f); glRecti(35, 55, 65, 75);
+    glColor3f(0.7f, 0.7f, 0.7f); glRecti(46, 75, 54, poleHeight);
+
+    // Rope and rings
+    float ringRadius = 15.0f;
+    glColor3f(0.7f, 0.7f, 0.7f); glLineWidth(3.0f);
+    drawRingArc(50, (float)flagTop, ringRadius, true);
+    drawRingArc(50, (float)flagBottom, ringRadius, true);
+
+    float ropeStartX = 50 + ringRadius;
+    glLineWidth(2.5f);
+    glBegin(GL_LINES);
+        glVertex2f(ropeStartX, (float)flagTop); glVertex2f(ropeStartX, tieOffY);
+        glVertex2f(ropeStartX, (float)flagTop); glVertex2f(flagStart, (float)flagTop);
+        glVertex2f(ropeStartX, (float)flagBottom); glVertex2f(flagStart, (float)flagBottom);
+        glVertex2f(50.0f + 10.0f, tieOffY); glVertex2f(ropeStartX, tieOffY);
+    glEnd();
+
+    // Waving flag effect
+    float currentWind = (isAnimated) ? windScale : 0.3f;
+    for (float x = flagStart; x < 480.0f; x += 1.0f) {
+        float distFromPole = (x - 50);
+        float yWave = (distFromPole * (0.15f * currentWind)) * sin(0.05f * x + waveTime);
+        float xWave = (distFromPole * (0.03f * currentWind)) * cos(0.05f * x + waveTime);
+
+        if (x < 160.0f) glColor3f(1.0f, 1.0f, 1.0f);
+        else glColor3f(0.85f, 0.0f, 0.0f);
+
+        glBegin(GL_QUAD_STRIP);
+            glVertex2f(x + xWave, (float)flagBottom + yWave);
+            glVertex2f(x + xWave, (float)flagTop + yWave);
+            float nextX = x + 1.0f;
+            float nYW = ((nextX - 50) * (0.15f * currentWind)) * sin(0.05f * nextX + waveTime);
+            float nXW = ((nextX - 50) * (0.03f * currentWind)) * cos(0.05f * nextX + waveTime);
+            glVertex2f(nextX + nXW, (float)flagBottom + nYW);
+            glVertex2f(nextX + nXW, (float)flagTop + nYW);
+        glEnd();
+    }
+
+    // Triangular flag details
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glBegin(GL_TRIANGLES);
+    float triH = (float)(flagTop - flagBottom) / 5.0f;
+    for (float y = (float)flagBottom; y < (float)flagTop; y += triH) {
+        float ywB = ((160.0f - 50) * (0.15f * currentWind)) * sin(0.05f * 160.0f + waveTime);
+        float xwB = ((160.0f - 50) * (0.03f * currentWind)) * cos(0.05f * 160.0f + waveTime);
+        float tX = 160.0f + 60.0f;
+        float ywT = ((tX - 50) * (0.15f * currentWind)) * sin(0.05f * tX + waveTime);
+        float xwT = ((tX - 50) * (0.03f * currentWind)) * cos(0.05f * tX + waveTime);
+        glVertex2f(160.0f + xwB, y + ywB);
+        glVertex2f(tX + xwT, y + (triH / 2.0f) + ywT);
+        glVertex2f(160.0f + xwB, y + triH + ywB);
+    }
+    glEnd();
+glPopMatrix();
+
+// Logo drawing
+glPushMatrix();
+    float cX = 750.0f, cY = 350.0f;
+    float breath = isAnimated ? (float)(0.06 * sin(waveTime * 1.2)) : 0.0f;
+    float bluePulse = isAnimated ? (float)(0.85 + (0.15 * sin(waveTime * 1.5))) : 1.0f;
+
+    glTranslatef(logoX + cX, logoY + cY, 0.0f);
+    glRotatef(logoAngle, 0, 0, 1);
+    glScalef(logoScale + breath, logoScale + breath, 1.0f);
+
+    if (isNight) glColor3f(0.2f, 0.2f, 0.4f);
+    else glColor3f(0.0f, 0.51f, bluePulse);
+    if (!isAnimated) glColor3f(0.5f, 0.5f, 0.5f);
+
+    glBegin(GL_POLYGON);
+        for (int i = 0; i <= 360; i++) {
+            float r = (float)i * M_PI / 180.0f;
+            glVertex2f(cos(r) * 110.0f, ((i > 180) ? -85.0f : 85.0f) + sin(r) * 110.0f);
+        }
+    glEnd();
+
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glBegin(GL_QUADS);
+        glVertex2f(-7.0f, -90.0f); glVertex2f(7.0f, -90.0f);
+        glVertex2f(7.0f, 
+
 
 
 
