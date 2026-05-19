@@ -219,6 +219,9 @@ void handleMouse(int button, int state, int x, int y) {
     glutPostRedisplay();
 }
 
+
+
+
 void timer(int value) {
     float effectiveWind = (isAnimated) ? windScale : 0.15f;
     if (effectiveWind < 0.1f) effectiveWind = 0.1f;
@@ -242,6 +245,8 @@ void timer(int value) {
     glutPostRedisplay();
     glutTimerFunc(16, timer, 0);
 }
+
+
 
 
 void drawRingArc(float cx, float cy, float radius, bool isFront) {
