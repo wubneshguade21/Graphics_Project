@@ -493,7 +493,7 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitWindowSize(1200, 750);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutCreateWindow("Bahrain flag with Bluethooth Simulation");
+    glutCreateWindow("OpenGL-Based Bahrain Flag and Bluetooth Logo Simulation");
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluOrtho2D(0, 1200, 0, 750);

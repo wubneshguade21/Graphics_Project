@@ -55,7 +55,7 @@ By combining these transformations with `glPushMatrix()` and `glPopMatrix()`, ea
 
 ---
 
-## 🚀 Advanced Interactive Environmental Animation System
+## 🚀 🎯 🚀 🎯🚀 🎯  Bonus Challenge 🚀 🎯🚀 🎯🚀 🎯 🚀 🎯
 
 To go beyond the standard classroom requirements and satisfy the bonus challenge criteria, this project introduces an advanced Interactive Environmental Animation System integrated directly into the OpenGL rendering engine.
 
@@ -236,9 +236,9 @@ When paused, all animated components stop smoothly while preserving the current 
 |----|------|----|
 | 1 | Yeabsra Andargachew | GUR/O1154/16 |
 | 2 | Wubnesh Guade | GUR/02172/16 |
-| 3 | Dawit Atinkut | GUR/... |
-| 4 | Surafel | GUR/... |
-| 5 | Ayub | GUR/... |
-| 6 | Meseret | GUR/... |
-
+| 3 | Dawit Atinkut | GUR/01843/16 |
+| 4 | Surafel Worku | GUR/01327/16 |
+| 5 | Ayub Abduljellil| GUR/ |
+| 6 | Meseret G/Mariam | GUR/02811/16 |
+|7  | Sekeria Sulub | GUR/
 ---
